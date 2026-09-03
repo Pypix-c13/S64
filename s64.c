@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/stat.h>
 
 typedef enum TokenType {
     TYPE_SET, TYPE_RETURN, TYPE_LBRACE, TYPE_RBRACE, TYPE_LPAREN,
@@ -61,6 +62,18 @@ typedef struct SymbolNode {
 typedef struct SymbolTable {
     SymbolNode *head;
 } SymbolTable;
+
+typedef struct Function {
+    char *label;
+    char **parameter;
+    uint32_t parameter_count;
+    ASTNode *body;
+} Function;
+
+typedef struct FunctionTable {
+    Function **function;
+    size_t count;
+} FunctionTable;
 
 const Vector2i keyword[] = {
     {"set", TYPE_SET}, {"return", TYPE_RETURN}, {"{", TYPE_LBRACE}, {"}", TYPE_RBRACE},
@@ -577,4 +590,110 @@ ASTNode *function_statement(Parser *p) {
     }
     consume(p, TYPE_RBRACE);
     return node;
+}
+
+Function *add_function(const char *label,char **parameter,uint32_t parameter_count,ASTNode *body) {
+    Function *func = (Function *)malloc(sizeof(Function));
+    if(func == NULL) return NULL;
+
+    func->label = strdup(label);
+    func->parameter = parameter;
+    func->parameter_count = parameter_count;
+    func->body = body;
+
+    return func;
+}
+
+void register_function(FunctionTable *table,Function *function) {
+    table->function = realloc(
+        table->function,
+        sizeof(Function *) * (table->count + 1)
+    );
+
+    table->function[table->count++] = function;
+}
+
+Function *lookup_function(FunctionTable *table,const char *label) {
+    for(size_t i = 0;i < table->count;i++) {
+        if(strcmp(table->function[i]->label,label) == 0)
+            return table->function[i];
+    }
+
+    return NULL;
+}
+
+uint32_t execute_function(Function *function) {
+    ASTNode *body = function->body;
+
+    for(size_t i = 0;i < body->node_count;i++) {
+        ASTNode *node = body->child[i];
+
+        if(node->type == AST_SET)
+            evaluate(node->right);
+
+        if(node->type == AST_RETURN) {
+            if(node->left != NULL)
+                return evaluate(node->left);
+
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
+uint32_t call_function(FunctionTable *table,const char *label) {
+    Function *function = lookup_function(table,label);
+
+    if(function == NULL)
+        return 0;
+
+    return execute_function(function);
+}
+
+char *reader(const char *source) {
+    FILE *fptr = fopen(source, "r");
+    if(!fptr) return NULL;
+
+    fseek(fptr, 0, SEEK_END);
+    long size = ftell(fptr);
+    rewind(fptr);
+
+    char *buffer = (char *)malloc(size + 1);
+    if(!buffer) {
+        printf("Failed to allocate memory!.\n");
+        fclose(fptr);
+        return NULL;
+    }
+
+    size_t read = fread(buffer, 1, size, fptr);
+    buffer[read] = '\0';
+
+    fclose(fptr);
+    return buffer;
+}
+
+bool is_file(const char *source) {
+    FILE *fptr = fopen(source, "r");
+    if(!fptr) {
+        printf("File not found!.\n");
+        return false;
+    }
+
+    struct stat path_stat;
+    if(stat(source, &path_stat) != 0) return false;
+
+    if(!S_ISREG(path_stat.st_mode)) {
+        printf("Its not a file!.\n");
+        return false;
+    }
+
+    const char *dot = strrchr(source, '.');
+    if(!dot || strcmp(dot, ".sbit") != 0) {
+        printf("Extension must be .sbit");
+        return false;
+    }
+
+    fclose(fptr);
+    return true;
 }
