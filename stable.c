@@ -304,6 +304,17 @@ void free_ast(ASTNode *node) {
 ASTNode *factor(Parser *p) {
     Token *token = current_token(p);
 
+    if(token->type == TYPE_ID) {
+        ASTNode *node = add_node(NULL);
+        if(node == NULL) return NULL;
+
+        node->type = AST_ID;
+        node->value = strdup(token->value);
+
+        consume(p,TYPE_ID);
+        return node;
+    }
+
     if(token->type != TYPE_INT_LITERAL &&
        token->type != TYPE_HEX_LITERAL) return NULL;
 
