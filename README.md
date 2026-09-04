@@ -1,125 +1,147 @@
-# S64 Language — Story
-S64 was born from a simple question:
+# S64 — Upgrade
 
-> **"Can I create a programming language with just one syntax?"**
+S64 is a minimal low-level programming language focused on integer values, hexadecimal values, bitwise operations, variables, functions, and explicit control over data flow.
 
-That question became the starting point of **S64**.
-What started as a simple experiment eventually became a language built around minimalism, low-level operations, and a deliberately limited syntax.
+## Syntax
 
----
+S64 currently provides only one keyword:
 
-# S64 Language — Design
+* `return` — returns a value from a function.
 
-S64 is a **Domain-Specific Language (DSL)** and is **not Turing Complete** by design.
-The language intentionally has only two core syntax constructs:
+## Symbols
 
-```text
-set
-return
+| Symbol | Purpose                         |
+| ------ | ------------------------------- |
+| `{ }`  | Function/block boundary         |
+| `( )`  | Function parameters / arguments |
+| `,`    | Parameter separator             |
+| `;`    | Statement terminator            |
+| `=`    | Variable assignment             |
+
+## Expression
+
+S64 supports the following bitwise operators:
+
+| Operator | Operation   |
+| -------- | ----------- |
+| `&`      | Bitwise AND |
+| `\|`     | Bitwise OR  |
+| `~`      | Bitwise NOT |
+| `^`      | Bitwise XOR |
+| `<<`     | Left shift  |
+| `>>`     | Right shift |
+
+Expressions can be combined to perform bitwise operations on supported values.
+
+```s64
+value = 0x10 << 2;
+result = value & 0x3F;
 ```
 
-The available symbols are:
+## Supported Values
 
-```text
-{}
-()
-;
-=
-&
-|
-~
-^
-<<
->>
-+
--
-*
-/
+S64 currently supports two numeric formats:
+
+### Integer
+
+```s64
+value = 64;
 ```
 
-S64 is intentionally small.
-Rather than adding more and more syntax, S64 focuses on making a very small set of operations useful and meaningful.
+### Hexadecimal
 
----
+```s64
+value = 0x40;
+```
 
-# S64 Language — Example Code
+Both formats represent integer values and can be used in expressions.
 
 ## Variables
-Variables can be created using `set`:
 
-```text
-set on = 0x01;
-set off = 0x00;
+Variables are declared through assignment:
+
+```s64
+<identifier> = <expression>;
 ```
 
-S64 currently focuses on integer and hexadecimal values.
+Example:
 
----
+```s64
+value = 10;
+mask = 0xFF;
+result = value & mask;
+```
 
-## Looping
-S64 does not provide traditional looping keywords such as `for` or `while`.
-Instead, recursive function calls can be used:
+A variable can also use another variable as part of an expression:
 
-```text
-my_function() {
-    my_function();
+```s64
+value = 0x10;
+result = value << 2;
+```
+
+## Functions
+
+Functions are defined using an identifier followed by a parameter list and a block:
+
+```s64
+<function_name>(<parameters>) {
+    <statement>;
 }
 ```
 
-The function continuously calls itself, creating recursive execution.
+Example:
 
----
-
-## Looping with `return`
-A `return` statement can be used to stop the recursive execution:
-
-```text
-my_function() {
-    my_function();
-    return 0x00;
+```s64
+calculate(a, b) {
+    result = a & b;
+    return result;
 }
 ```
 
-Here, `0x00` is returned when the function reaches the `return` statement.
+The `{}` block defines the scope of the function.
 
----
+## Return
 
-## Math Expression
+A function can return either an expression or an identifier:
 
-S64 supports arithmetic expressions:
-
-```text
-set after_second = 30 + 0x0001;
+```s64
+return <expression|identifier>;
 ```
 
-S64 also provides bitwise and bit-shifting operators:
+Example:
 
-```text
-&
-|
-~
-^
-<<
->>
+```s64
+calculate(a, b) {
+    result = a ^ b;
+    return result;
+}
 ```
 
-along with the basic arithmetic operators:
+An expression can also be returned directly:
 
-```text
-+
--
-*
-/
+```s64
+calculate(a, b) {
+    return a | b;
+}
 ```
 
----
+## Complete Example
 
-# The Idea Behind S64
-S64 is intentionally limited.
+```s64
+calculate(value, mask) {
+    result = value & mask;
+    result = result << 2;
+    return result;
+}
+```
 
-It is not designed to be a replacement for a general-purpose programming language. Instead, it is an exploration of how far a language can go when its syntax is kept extremely small.
+This example demonstrates the core features currently available in S64:
 
-> **Less syntax. More meaning.**
-
-S64 began with one question.
-The project is an attempt to find the answer.
+* Variables
+* Integer values
+* Hexadecimal values
+* Bitwise expressions
+* Function parameters
+* Functions
+* Return statements
+* Block scope
